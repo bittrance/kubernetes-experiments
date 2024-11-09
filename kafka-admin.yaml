@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: kafka-cluster
+  name: kafka-admin
+spec:
+  containers:
+    - name: kafka-admin
+      image: docker.io/bitnami/kafka:3.8.1-debian-12-r0
+      args:
+        - bash
+        - -c
+        - sleep infinity
+      volumeMounts:
+        - mountPath: /work
+          name: work
+  volumes:
+    - name: work
+      hostPath:
+        path: /work

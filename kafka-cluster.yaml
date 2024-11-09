@@ -1,0 +1,15 @@
+broker:
+  automountServiceAccountToken: true
+controller:
+  automountServiceAccountToken: true
+externalAccess:
+  enabled: true
+  autoDiscovery:
+    enabled: true
+metrics:
+  jmx:
+    enabled: true
+  serviceMonitor:
+    enabled: true
+rbac:
+  create: true
