@@ -2,7 +2,9 @@
 
 import asyncio
 import contextlib
+import csv
 import sys
+import time
 
 from aiokafka import AIOKafkaConsumer, TopicPartition
 
@@ -36,14 +38,22 @@ async def poll_offsets(cb, **kafka_config):
                 continue
             offset = int.from_bytes(msg.value[2:10], 'big', signed=True)
             if topic != '__consumer_offsets':
-                cb(group_id, topic, partition, offset)
+                cb(group_id, topic, partition, time.time(), offset)
     finally:
         await consumer.stop()
 
 
 async def runner(**kafka_config):
-    def receiver(group_id, topic, partition, offset):
-        print(group_id, topic, partition, offset)
+    output = csv.writer(sys.stdout)
+    output.writerow(['tstamp', 'group_id', 'topic', 'partition', 'offset_delta'])
+    consumer_groups = {}
+    def receiver(group_id, topic, partition, tstamp, offset):
+        group = consumer_groups.setdefault(group_id, {'topics': {}})
+        topic_stats = group['topics'].setdefault(f'{topic}/{partition}',  {'latest_offset': None})
+        latest_offset = topic_stats['latest_offset'] 
+        delta = None if latest_offset is None else offset - latest_offset
+        topic_stats['latest_offset'] = offset
+        output.writerow([int(tstamp), group_id, topic, partition, delta])
 
     while True:
         async with asyncio.TaskGroup() as tasks:
