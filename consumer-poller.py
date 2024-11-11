@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import contextlib
 import csv
@@ -59,16 +60,30 @@ async def runner(**kafka_config):
         async with asyncio.TaskGroup() as tasks:
             tasks.create_task(poll_offsets(receiver, **kafka_config))
             tasks.create_task(asyncio.sleep(1))
+        sys.stdout.flush()
         await asyncio.sleep(10)
 
 
+def args():
+    parser = argparse.ArgumentParser(
+        prog='consumer-poller',
+        description='Collects statistics on consumer group offsets',
+    )
+    parser.add_argument('--bootstrap-servers', dest='bootstrap_servers')
+    parser.add_argument('--username', dest='sasl_plain_username')
+    parser.add_argument('--password', dest='sasl_plain_password')
+    args = vars(parser.parse_args())
+    for k in list(args.keys()):
+        if k is None:
+            del args[k]
+    return args
+
 if __name__ == '__main__':
-    kafka_config = {
-        'bootstrap_servers': sys.argv[1],
-        'security_protocol': 'SASL_PLAINTEXT',
-        'sasl_mechanism': 'SCRAM-SHA-256',
-        'sasl_plain_username': 'user1',
-        'sasl_plain_password': 'w1ogDE4i8n',
-    }
+    kafka_config = args()
+    if kafka_config.get('sasl_plain_username'):
+        kafka_config.update({
+            'security_protocol': 'SASL_PLAINTEXT',
+            'sasl_mechanism': 'SCRAM-SHA-256',
+        })
     asyncio.run(runner(**kafka_config))
 
