@@ -1,6 +1,8 @@
 broker:
+  resourcesPreset: large
   automountServiceAccountToken: true
 controller:
+  resourcesPreset: large
   automountServiceAccountToken: true
 externalAccess:
   enabled: true
