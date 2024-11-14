@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import contextlib
 import csv
+import random
 import sys
 import time
 
@@ -22,7 +23,7 @@ def parse_key(key):
     return (group_id.decode("utf-8"), topic.decode("utf-8"), partition)
 
 
-async def poll_offsets(cb, **kafka_config):
+async def sample_offsets(cb, sample_time, **kafka_config):
     kafka_config['group_id'] = 'andqvi-consumer-poller'
     consumer = AIOKafkaConsumer(
         '__consumer_offsets',
@@ -30,6 +31,7 @@ async def poll_offsets(cb, **kafka_config):
     )
     await consumer.start()
     await consumer.seek_to_end()
+    deadline = time.time() + sample_time
     try:
         async for msg in consumer:
             try:
@@ -40,28 +42,44 @@ async def poll_offsets(cb, **kafka_config):
             offset = int.from_bytes(msg.value[2:10], 'big', signed=True)
             if topic != '__consumer_offsets':
                 cb(group_id, topic, partition, time.time(), offset)
+            if time.time() > deadline:
+                break
     finally:
         await consumer.stop()
 
 
-async def runner(**kafka_config):
+async def runner(kafka_config, config):
     output = csv.writer(sys.stdout)
     output.writerow(['tstamp', 'group_id', 'topic', 'partition', 'offset_delta'])
-    consumer_groups = {}
+
+    stats = {}
     def receiver(group_id, topic, partition, tstamp, offset):
-        group = consumer_groups.setdefault(group_id, {'topics': {}})
-        topic_stats = group['topics'].setdefault(f'{topic}/{partition}',  {'latest_offset': None})
-        latest_offset = topic_stats['latest_offset'] 
-        delta = None if latest_offset is None else offset - latest_offset
-        topic_stats['latest_offset'] = offset
-        output.writerow([int(tstamp), group_id, topic, partition, delta])
+        entry = stats.setdefault((group_id, topic, partition),  {'latest_offset': None, 'commits': 0})
+        entry['latest_offset'] = offset
+        entry['commits'] += 1
+
+    prev_offsets = {}
+    def cycle_stats(sample_fraction):
+        for key, entry in stats.items():
+            group_id, topic, partition = key
+            prev_offset = prev_offsets.get(key)
+            delta = None if prev_offset is None else entry['latest_offset'] - prev_offset
+            estimated_commits = entry['commits'] * sample_fraction
+            output.writerow([group_id, topic, partition, estimated_commits, delta])
+            prev_offsets[key] = entry['latest_offset']
+        stats.clear()
 
     while True:
-        async with asyncio.TaskGroup() as tasks:
-            tasks.create_task(poll_offsets(receiver, **kafka_config))
-            tasks.create_task(asyncio.sleep(1))
+        start = time.time()
+        await sample_offsets(receiver, config['sample_time'], **kafka_config)
+        cycle_stats(config['sampling_interval'] / config['sample_time'])
         sys.stdout.flush()
-        await asyncio.sleep(10)
+        elapsed = time.time() - start
+        if config['sampling_interval'] < elapsed:
+            sys.stderr.write(f'sampling took too long: {elapsed}s\n')
+        else:
+            jitter = random.random() * config['sampling_jitter'] - config['sampling_jitter'] / 2
+            await asyncio.sleep(config['sampling_interval'] - elapsed + jitter)
 
 
 def args():
@@ -72,6 +90,9 @@ def args():
     parser.add_argument('--bootstrap-servers', dest='bootstrap_servers')
     parser.add_argument('--username', dest='sasl_plain_username')
     parser.add_argument('--password', dest='sasl_plain_password')
+    parser.add_argument('--interval', dest='sampling_interval', default=10)
+    parser.add_argument('--sample-time', dest='sample_time', default=2)
+    parser.add_argument('--jitter', dest='sampling_jitter', default=2)
     args = vars(parser.parse_args())
     for k in list(args.keys()):
         if k is None:
@@ -85,5 +106,6 @@ if __name__ == '__main__':
             'security_protocol': 'SASL_PLAINTEXT',
             'sasl_mechanism': 'SCRAM-SHA-256',
         })
-    asyncio.run(runner(**kafka_config))
+    sampler_config = { key: kafka_config.pop(key) for key in ['sampling_interval', 'sample_time', 'sampling_jitter'] }
+    asyncio.run(runner(kafka_config, sampler_config))
 
