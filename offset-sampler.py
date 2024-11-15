@@ -50,11 +50,13 @@ async def sample_offsets(cb, sample_time, **kafka_config):
 
 async def runner(kafka_config, config):
     output = csv.writer(sys.stdout)
-    output.writerow(['tstamp', 'group_id', 'topic', 'partition', 'offset_delta'])
+    output.writerow(['tstamp', 'group_id', 'topic', 'partition', 'commit_rate', 'offset_rate'])
 
     stats = {}
     def receiver(group_id, topic, partition, tstamp, offset):
-        entry = stats.setdefault((group_id, topic, partition),  {'latest_offset': None, 'commits': 0})
+        entry = stats.setdefault((group_id, topic, partition),  {'tstamp': None, 'latest_offset': None, 'commits': 0})
+        if entry['tstamp'] is None:
+            entry['tstamp'] = tstamp
         entry['latest_offset'] = offset
         entry['commits'] += 1
 
@@ -63,9 +65,9 @@ async def runner(kafka_config, config):
         for key, entry in stats.items():
             group_id, topic, partition = key
             prev_offset = prev_offsets.get(key)
-            delta = None if prev_offset is None else entry['latest_offset'] - prev_offset
-            estimated_commits = entry['commits'] * sample_fraction
-            output.writerow([group_id, topic, partition, estimated_commits, delta])
+            estimated_commit_rate = entry['commits'] / config['sample_time']
+            estimated_offset_rate = None if prev_offset is None else (entry['latest_offset'] - prev_offset) / config['sampling_interval']
+            output.writerow([entry['tstamp'], group_id, topic, partition, estimated_commit_rate, estimated_offset_rate])
             prev_offsets[key] = entry['latest_offset']
         stats.clear()
 
@@ -90,9 +92,9 @@ def args():
     parser.add_argument('--bootstrap-servers', dest='bootstrap_servers')
     parser.add_argument('--username', dest='sasl_plain_username')
     parser.add_argument('--password', dest='sasl_plain_password')
-    parser.add_argument('--interval', dest='sampling_interval', default=10)
-    parser.add_argument('--sample-time', dest='sample_time', default=2)
-    parser.add_argument('--jitter', dest='sampling_jitter', default=2)
+    parser.add_argument('--interval', type=float, dest='sampling_interval', default=10)
+    parser.add_argument('--sample-time', type=float, dest='sample_time', default=2)
+    parser.add_argument('--jitter', type=float, dest='sampling_jitter', default=2)
     args = vars(parser.parse_args())
     for k in list(args.keys()):
         if k is None:
