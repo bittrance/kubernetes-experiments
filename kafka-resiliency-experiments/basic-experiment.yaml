@@ -1,0 +1,34 @@
+version: 1.0.0
+title: Ensure load-test continues to operate during pod failure
+description: >
+  Blah
+configuration:
+  prometheus_base_url: http://vm.localtest.me
+
+steady-state-hypothesis:
+  title: Error rate remains low
+  probes:
+    - type: probe
+      name: Service remain healthy
+      tolerance: true
+      provider:
+        type: python
+        module: chaosk8s.statefulset.probes
+        func: statefulset_fully_available
+        arguments:
+          name: infinispan
+          ns: infinispan
+          timeout: 60
+method:
+  - type: action
+    name: terminate-db-pod
+    provider:
+      type: python
+      module: chaosk8s.pod.actions
+      func: terminate_pods
+      arguments:
+        label_selector: app=infinispan-pod
+        ns: infinispan
+        rand: true
+    pauses:
+      after: 5

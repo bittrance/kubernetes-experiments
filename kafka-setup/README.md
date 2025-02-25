@@ -5,8 +5,14 @@
 ```shell
 helm install kafka \
   --namespace kafka-cluster --create-namespace \
-  --values ./kafka-cluster.yaml \
+  --values ./kafka-cluster-values.yaml \
   oci://registry-1.docker.io/bitnamicharts/kafka
+```
+
+## Set up typical dashboard for Kafka
+
+```shell
+kubectl apply -f ./kafka-setup/kafka-dashboard.yaml
 ```
 
 ## Credentials for connecting to the cluster
