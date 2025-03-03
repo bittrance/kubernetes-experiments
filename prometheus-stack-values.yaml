@@ -10,10 +10,15 @@ grafana:
       - grafana.localtest.me
 
 prometheus:
+  ingress:
+    enabled: true
+    hosts:
+      - prometheus.localtest.me
   prometheusSpec:
     podMonitorNamespaceSelector: {}
     podMonitorSelector: {}
     podMonitorSelectorNilUsesHelmValues: false
+    enableRemoteWriteReceiver: true
     ruleNamespaceSelector: {}
     ruleSelector: {}
     ruleSelectorNilUsesHelmValues: false
