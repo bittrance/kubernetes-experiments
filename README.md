@@ -2,7 +2,8 @@
 
 - [Kafka consumer stats](./kafka-consumer-stats): collect commit rate and offset rate for consumer groups on a Kafka cluster
 - [General tools container](./tools-container): builds container image `bittrance/tools` useful for in-cluster debugging
-
+- [Consul setup](./consul-k8s): sets up a Consul cluster on Kubernetes for testing and development
+ 
 ## Development setup
 
 Most of these experiment assumes you have a local Kubernetes cluster set up.
