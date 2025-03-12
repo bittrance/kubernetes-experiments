@@ -17,14 +17,20 @@ nodes:
         hostPort: 80
         protocol: TCP
   - role: worker
+    labels:
+      topology.kubernetes.io/zone: zone-a
     extraMounts:
       - hostPath: .
         containerPath: /work
   - role: worker
+    labels:
+      topology.kubernetes.io/zone: zone-b
     extraMounts:
       - hostPath: .
         containerPath: /work
   - role: worker
+    labels:
+      topology.kubernetes.io/zone: zone-c
     extraMounts:
       - hostPath: .
         containerPath: /work
