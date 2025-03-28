@@ -1,0 +1,105 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: hello-rest
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello-middleware
+spec:
+  parentRefs:
+    - name: hello-rest
+  rules:
+    - backendRefs:
+        - name: hello-middleware
+          port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-middleware
+spec:
+  selector:
+    app.kubernetes.io/name: oauth2-proxy
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: oauth2-proxy
+  labels:
+    app.kubernetes.io/name: oauth2-proxy
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: oauth2-proxy
+    spec:
+      containers:
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy:v7.8.2
+          args:
+            - --http-address
+            - 0.0.0.0:8080
+          envFrom:
+            - configMapRef:
+                name: oauth2-proxy
+          ports:
+            - name: http
+              containerPort: 8080
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/bash", "-c", "sleep 2"]
+          startupProbe:
+            failureThreshold: 10
+            httpGet:
+              path: /ready
+              port: 8080
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /ready
+              port: 8080
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: hello-upstream
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello-rest
+spec:
+  parentRefs:
+    - name: hello-upstream
+  rules:
+    - backendRefs:
+        - name: hello-rest
+          port: 8080
