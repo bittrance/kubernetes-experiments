@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: middleware-test
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: hello-gateway
+  namespace: middleware-test
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello-middleware
+  namespace: middleware-test
+spec:
+  parentRefs:
+    - name: hello-gateway
+  rules:
+    - backendRefs:
+        - name: hello-middleware
+          port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-middleware
+  namespace: middleware-test
+spec:
+  selector:
+    app: caddy-middleware
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hello-middleware
+  namespace: middleware-test
+  labels:
+    app: caddy-middleware
+spec:
+  selector:
+    matchLabels:
+      app: caddy-middleware
+  template:
+    metadata:
+      labels:
+        app: caddy-middleware
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2.9.1-alpine
+          command:
+            - caddy
+            - reverse-proxy
+            - --from
+            - :8081
+            - --to
+            - hello-upstream:8082
+            - --header-down
+            - "X-Greeting: Hello middleware!"
+            - --access-log
+          ports:
+            - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-upstream
+  namespace: middleware-test
+spec:
+  ports:
+    - name: http
+      port: 8082
