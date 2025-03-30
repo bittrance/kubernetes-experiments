@@ -1,0 +1,58 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: hello-backend
+  namespace: middleware-test
+spec:
+  parentRefs:
+    - kind: Service
+      name: hello-upstream
+      port: 8082
+  rules:
+    - backendRefs:
+        - name: hello-backend
+          port: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-backend
+  namespace: middleware-test
+spec:
+  selector:
+    app: caddy-backend
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8084
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-backend
+  namespace: middleware-test
+  labels:
+    app: caddy-backend
+spec:
+  selector:
+    matchLabels:
+      app: caddy-backend
+  template:
+    metadata:
+      labels:
+        app: caddy-backend
+    spec:
+      containers:
+        - name: caddy
+          image: caddy:2.9.1-alpine
+          command:
+            - caddy
+            - respond
+            - --listen
+            - :8084
+            - --body
+            - Hello this!
+            - --access-log
+          ports:
+            - containerPort: 8084
+
