@@ -26,3 +26,4 @@ nodes:
         containerPath: /work
 networking:
   disableDefaultCNI: true
+  kubeProxyMode: none
