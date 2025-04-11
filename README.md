@@ -13,7 +13,18 @@ Most of these experiment assumes you have a local Kubernetes cluster set up.
 ```shell
 kind create cluster --config ./kind-cluster.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-docker run -d --rm --network kind -v /var/run/docker.sock:/var/run/docker.sock registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v0.4.0
+docker run -d --rm \
+  --name cloud-provider-kind \
+  --network kind \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v0.4.0
+```
+
+## Add a metrics-server
+
+```shell
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml
+kubectl patch deployments.apps --namespace kube-system metrics-server --type=json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/args/2", "value": "--kubelet-insecure-tls"}]'
 ```
 
 ## Set up Prometheus and Grafana in the cluster
