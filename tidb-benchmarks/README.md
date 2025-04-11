@@ -1,6 +1,6 @@
 # Simple TiDB setup
 
-Default Kind setup.
+Default Kind setup. Tested with Kubernetes 1.31 and Kind 0.24.
 
 ```bash
 kubectl create -f https://raw.githubusercontent.com/pingcap/tidb-operator/v1.6.1/manifests/crd.yaml
@@ -13,7 +13,7 @@ kubectl apply -f ./tidb-cluster.yaml
 Connect to TiDB (untested):
 
 ```bash
-TIDB_IP=$(kubectl --namespace tidb-cluster get services hello-tidb-tidb -o jsonpath='{@.externalIP}')
+TIDB_IP=$(kubectl --namespace tidb-cluster get services hello-tidb-tidb -o jsonpath='{@.status.loadBalancer.ingress[0].ip}')
 mysql -h $TIDB_IP --port 4000 -u root
 ```
 
@@ -40,7 +40,10 @@ qb --dsn "sbtest:password@tcp($TIDB_IP:4000)/sbtest"
 
 ## Running sysbench tests
 
+Another useful db testing tool is [sysbench](https://github.com/akopytov/sysbench).
+
 ```shell
+apt-get install sysbench
 mysql -h $TIDB_IP --port 4000 -u root -e "
 CREATE SCHEMA sbtest;
 CREATE USER sbtest@'%' IDENTIFIED BY 'password';
