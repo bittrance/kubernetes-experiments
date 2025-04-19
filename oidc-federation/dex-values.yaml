@@ -1,0 +1,41 @@
+replicaCount: 2
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+https:
+  enabled: true
+service:
+  type: LoadBalancer
+  ports:
+    http:
+      port: 80
+    https:
+      port: 443
+volumes:
+  - name: secret-volume
+    secret:
+      secretName: dex-certificate
+volumeMounts:
+  - name: secret-volume
+    readOnly: true
+    mountPath: /certs
+config:
+  issuer: http://dex.oidc-federation.test
+  web:
+    # https: 0.0.0.0:5556
+    tlsCert: /certs/tls.crt
+    tlsKey: /certs/tls.key
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+  connectors:
+    - type: oidc
+      id: bittrancegmailcom
+      name: Bittrance Test App
+      config:
+        issuer: https://login.microsoftonline.com/0a3a19f8-5fe4-4fb1-aabc-2bf971085ba2/v2.0
+        clientID: <client-id>
+        clientSecret: <client-secret>
+        redirectURI: http://dex.oidc-federation.test/callback
+  
