@@ -24,6 +24,8 @@ config:
   web:
     tlsCert: /certs/tls.crt
     tlsKey: /certs/tls.key
+  logger:
+    format: json
   storage:
     type: kubernetes
     config:
@@ -38,6 +40,7 @@ config:
         clientSecret: <client-secret>
         redirectURI: https://dex.oidc-federation.test/callback
         insecureSkipEmailVerified: true
+        insecureEnableGroups: true
   staticClients:
     - id: af09c06d-366c-4d22-85df-8f4942bd1d1d
       name: backend
