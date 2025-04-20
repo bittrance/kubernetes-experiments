@@ -74,18 +74,21 @@ spec:
           image: caddy:2.9.1-alpine
           command:
             - caddy
-            - respond
-            - --listen
-            - :8081
-            - --body
-            - Hello backend!
-            - --access-log
+            - run
+            - --config=/config/Caddyfile
           ports:
             - containerPort: 8081
+          volumeMounts:
+            - name: caddy-config
+              readOnly: true
+              mountPath: /config
       volumes:
         - name: certificates
           secret:
             secretName: backend-certificate
+        - name: caddy-config
+          configMap:
+            name: caddy-config
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -103,10 +106,29 @@ data:
   OAUTH2_PROXY_REDIRECT_URL: https://backend.oidc-federation.test
   OAUTH2_PROXY_CODE_CHALLENGE_METHOD: S256
   OAUTH2_PROXY_COOKIE_SECRET: verrahs3cr3t!!!!
-  # OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: 'true'
   OAUTH2_PROXY_PASS_ACCESS_TOKEN: 'true'
-  # OAUTH2_PROXY_FORCE_JSON_ERRORS: 'true'
+  OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: 'true'
   OAUTH2_PROXY_EMAIL_DOMAINS: '*'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+data:
+  Caddyfile: |
+    {
+      servers :8081 {
+        log_credentials
+      }
+    }
+    :8081 {
+      log default {
+        format json
+      }
+      handle {
+        respond "Hello world!"
+      }
+    }
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
