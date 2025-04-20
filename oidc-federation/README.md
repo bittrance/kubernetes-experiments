@@ -51,3 +51,13 @@ helm upgrade --install dex dex/dex \
   --value ./oidc-federation/dex-values.yaml
 kubectl --namespace oidc-federation apply -f ./oidc-federation/dex-certificate.yaml
 ```
+
+## Install backend
+
+Manifest needs manually adding client id, secret for now.
+
+```shell
+kubectl --namespace oidc-federation apply -f ./oidc-federation/backend.yaml
+```
+
+At this point, navigating to https://backend.oidc-federation.test should start login flow.
