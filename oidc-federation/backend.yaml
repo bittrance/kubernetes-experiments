@@ -37,7 +37,7 @@ spec:
             - --http-address=0.0.0.0:8080
             - --https-address=0.0.0.0:4433
           envFrom:
-            - configMapRef:
+            - secretRef:
                 name: oauth2-proxy
           ports:
             - name: http
@@ -89,27 +89,6 @@ spec:
         - name: caddy-config
           configMap:
             name: caddy-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: oauth2-proxy
-data:
-  OAUTH2_PROXY_TLS_KEY_FILE: /certs/tls.key
-  OAUTH2_PROXY_TLS_CERT_FILE: /certs/tls.crt
-  OAUTH2_PROXY_UPSTREAMS: http://localhost:8081/
-  OAUTH2_PROXY_OIDC_ISSUER_URL: https://dex.oidc-federation.test
-  OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY: 'true'
-  OAUTH2_PROXY_PROVIDER: oidc
-  OAUTH2_PROXY_CLIENT_ID: af09c06d-366c-4d22-85df-8f4942bd1d1d
-  OAUTH2_PROXY_CLIENT_SECRET: FPMn4cDm71QJ7Q1iSrTpVVs2rwkCdpkW
-  OAUTH2_PROXY_REDIRECT_URL: https://backend.oidc-federation.test
-  OAUTH2_PROXY_SCOPE: openid profile groups
-  OAUTH2_PROXY_OIDC_EMAIL_CLAIM: preferred_username
-  OAUTH2_PROXY_CODE_CHALLENGE_METHOD: S256
-  OAUTH2_PROXY_COOKIE_SECRET: verrahs3cr3t!!!!
-  OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: 'true'
-  OAUTH2_PROXY_EMAIL_DOMAINS: '*'
 ---
 apiVersion: v1
 kind: ConfigMap

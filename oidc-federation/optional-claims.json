@@ -1,0 +1,19 @@
+{
+  "accessToken": [
+    {
+      "additionalProperties": [],
+      "essential": false,
+      "name": "groups",
+      "source": null
+    }
+  ],
+  "idToken": [
+    {
+      "additionalProperties": [],
+      "essential": false,
+      "name": "groups",
+      "source": null
+    }
+  ],
+  "saml2Token": []
+}
