@@ -35,20 +35,58 @@ helm upgrade --install \
   --create-namespace \
   --version v1.17.0 \
   --set crds.enabled=true
-```
-
-```shell
 kubectl apply -f ./oidc-federation/selfsigned-ca.yaml
 ```
 
 ## Install dex
+
+First step is to create an Enterprise app and service principal. I had problem running the azcli commands below because some of them failed with JSON decode errors. Attaching `--output tsv` solves that issue but the creds json will have to be constructed by hand.
+
+```shell
+docker run -d --rm --name azcli -it -v .:/work mcr.microsoft.com/azure-cli:cbl-mariner2.0 bash -c 'sleep 3600'
+docker exec -it azcli az login --use-device-code
+docker exec azcli \
+  az ad app create \
+    --display-name oidc-federation \
+    --web-redirect-uris https://dex.oidc-federation.test/callback \
+    --optional-claims /work/oidc-federation/optional-claims.json \
+    --required-resource-accesses /work/oidc-federation/required-resources.json
+APPID=$(docker exec azcli \
+  az ad app list --display-name oidc-federation --query '[0].appId' --output tsv)
+docker exec azcli \
+  az ad app update --id $APPID --set groupMembershipClaims=SecurityGroup
+docker exec azcli \
+  az ad sp create --id $APPID
+docker exec azcli \
+  az ad sp credential reset --id $APPID \
+    --end-date $(date +%Y-%m-%dT%H:%M:%S%z --date '1 months') > dex-client.json
+```
+
+We also need to generate a client for our backend that we can then inject into Dex and backend:
+
+```shell
+echo "{
+\"client_id\": \"$(uuidgen)\",
+\"client_secret\": \"$(pwgen -s 32)\",
+\"cookie_secret\": \"$(pwgen -s 32)\"
+}" | jq . > oauth2-proxy-client.json
+cat dex-client.json oauth2-proxy-client.json \
+  | jq -s add \
+  | yq -y -f ./oidc-federation/dex-values.jq \
+  > ./oidc-federation/dex-values.yaml
+cat oauth2-proxy-client.json \
+  | jq -f ./oidc-federation/oauth2-proxy-config.jq \
+  > ./oidc-federation/oauth2-proxy-config.yaml
+```
+
+We can now install Dex and provide it with a cert from our self-signed CA:
 
 ```shell
 helm repo add dex https://charts.dexidp.io
 helm upgrade --install dex dex/dex \
   --namespace oidc-federation \
   --create-namespace \
-  --value ./oidc-federation/dex-values.yaml
+  --values ./oidc-federation/dex-values.yaml
 kubectl --namespace oidc-federation apply -f ./oidc-federation/dex-certificate.yaml
 ```
 
@@ -57,7 +95,9 @@ kubectl --namespace oidc-federation apply -f ./oidc-federation/dex-certificate.y
 Manifest needs manually adding client id, secret for now.
 
 ```shell
-kubectl --namespace oidc-federation apply -f ./oidc-federation/backend.yaml
+kubectl --namespace oidc-federation apply \
+  -f ./oidc-federation/backend.yaml \
+  -f ./oidc-federation/oauth2-proxy-config.yaml
 ```
 
-At this point, navigating to https://backend.oidc-federation.test should start login flow.
+At this point, navigating to [https://backend.oidc-federation.test](https://backend.oidc-federation.test ) should start login flow.
