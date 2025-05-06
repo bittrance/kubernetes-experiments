@@ -1,6 +1,6 @@
 # Experiement using Gateway API to get working grpc
 
-The purpose of this experiment is to demonstrate L7 load balancing for grpc with Gateawy API.
+The purpose of this experiment is to demonstrate L7 load balancing for grpc with Gateway API.
 
 ## Set up a Kind cluster with Gateway API-enabled Cilium CNI
 
