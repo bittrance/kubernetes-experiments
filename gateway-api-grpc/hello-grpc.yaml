@@ -11,9 +11,38 @@ metadata:
 spec:
   gatewayClassName: cilium
   listeners:
-    - name: http
-      protocol: HTTP
-      port: 80
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        certificateRefs:
+        - kind: Secret
+          group: ""
+          name: hello-grpc-certificate
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: hello-grpc
+  namespace: hello-grpc
+spec:
+  secretName: hello-grpc-certificate
+  isCA: false
+  usages:
+    - server auth
+  dnsNames:
+    - cilium-gateway-hello-grpc.hello-grpc.test
+  issuerRef:
+    name: ca-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-grpc-certificate
+  namespace: hello-grpc
+type: Opaque
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: GRPCRoute
@@ -23,6 +52,8 @@ metadata:
 spec:
   parentRefs:
     - name: hello-grpc
+  hostnames:
+    - cilium-gateway-hello-grpc.hello-grpc.test
   rules:
     - backendRefs:
         - name: hello-grpc
@@ -66,7 +97,7 @@ spec:
     spec:
       containers:
         - name: hello-grpc
-          image: bittrance/hello-rest:rust-grpc-6
+          image: bittrance/hello-world:tonic-hello-grpc
           lifecycle:
             preStop:
               sleep:
