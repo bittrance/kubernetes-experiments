@@ -26,7 +26,7 @@ export default function receive_greeting() {
     }
     client.connect(endpoint, options);
   }
-  const data = { name: 'Bert' };
+  const data = { name: 'Bert', delay_ms: 1 };
   const res = client.invoke('greetings.GreetMe/Send', data);
   if (res.status != StatusOK) {
     console.log(res);
