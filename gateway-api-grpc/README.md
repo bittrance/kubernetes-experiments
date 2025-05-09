@@ -18,6 +18,8 @@ Let's install an example grpc service from [bittrance/hello-world](https://hub.d
 kubectl apply -f ./gateway-api-grpc/hello-grpc.yaml
 ```
 
+We cheat slightly in this scenario in that we are reusing the hostname for the service that Cilium creates for our gateway `cilium-gateway-hello-grpc`. Actually, this service is an implementation detail and I suspect the name is not formally guaranteed to stay the same. However, we need a hostname for our TLS and the alternative would be to add e.g. external-dns to the mix.
+
 ## Smoke test
 
 ```shell
@@ -25,7 +27,7 @@ go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 grpcurl -proto gateway-api-grpc/greetings.proto \
     -insecure \
     -d '{"name": "Bittrance", "delay_ms": 2}' \
-    hello-grpc.hello-grpc.test:443 \
+    cilium-gateway-hello-grpc.hello-grpc.test:443 \
     greetings.GreetMe/Send
 ```
 
@@ -45,7 +47,7 @@ ghz --cpus 4 \
     cilium-gateway-hello-grpc.hello-grpc.test:443
 ```
 
-Sample run:
+Sample run. Note that the service is responsible for 1 ms:
 
 ```
 Latency distribution:
