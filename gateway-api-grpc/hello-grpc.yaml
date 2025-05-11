@@ -15,6 +15,7 @@ spec:
       protocol: HTTPS
       port: 443
       tls:
+        mode: Terminate
         certificateRefs:
         - kind: Secret
           group: ""
@@ -52,6 +53,7 @@ metadata:
 spec:
   parentRefs:
     - name: hello-grpc
+      sectionName: https
   hostnames:
     - cilium-gateway-hello-grpc.hello-grpc.test
   rules:
@@ -71,6 +73,7 @@ spec:
   ports:
     - name: grpc
       port: 8080
+      appProtocol: kubernetes.io/h2c
       targetPort: grpc
 ---
 apiVersion: apps/v1

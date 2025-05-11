@@ -19,7 +19,7 @@ At the point of testing this, Cilium has a defect that means it fails to "adopt"
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
 ```
 
-We can now install Cilium. This takes a few minutes before everything is up and running.
+We can now install Cilium. This takes a few minutes before everything is up and running. We also activate ALPN to get working HTTP/2 (and GRPC, though we do not test those in this experiment).
 
 ```bash
 helm repo add cilium https://helm.cilium.io/
@@ -29,6 +29,7 @@ helm upgrade --install cilium cilium/cilium \
   --set image.pullPolicy=IfNotPresent \
   --set ipam.mode=kubernetes \
   --set gatewayAPI.enabled=true \
+  --set gatewayAPI.enableAlpn=true \
   --set nodePort.enabled=true \
   --set kubeProxyReplacement=true \
   --set k8sServiceHost=kind-control-plane \
