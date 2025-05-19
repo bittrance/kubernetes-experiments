@@ -33,7 +33,17 @@ grpcurl -proto gateway-api-grpc/greetings.proto \
 
 ## Load test
 
-For unclear reasons, possibly because this setup seems not to support ALPN, k6/net/grpc does not work. We use [ghz](https://ghz.sh/) instead:
+In the first iteration of this experiment, k6 grpc load test did not work, which turned out to be somehow related to using ALPN, see bug report [Gateway API with ALPN enbled won't GRPC](https://github.com/cilium/cilium/issues/39484). After some additional testing, it seems you need to add `appProtocol: kubernetes.io/h2c` to the backend Service definition. This seems a bit excessive given that the traffic is coming in via a Gateway that is known to terminate TLS and a GRPCRoute, but that's what it takes with current Cilium.
+
+A simple load test using k6:
+
+```shell
+env HELLO_GRPC_ENDPOINT=cilium-gateway-hello-grpc.hello-grpc.test:443 \
+    k6 run --insecure-skip-tls-verify \
+        ./gateway-api-grpc/load-greetings.js
+```
+
+Here is the original [ghz](https://ghz.sh/) test:
 
 ```shell
 ghz --cpus 4 \
@@ -60,8 +70,10 @@ Latency distribution:
   99 % in 4.03 ms
 ```
 
-While this load test is running we can observe that the load is spread across all pods.
+While this load test is running we can observe that the load is spread across all pods, demonstrating L7 load balancing.
 
 ```shell
 watch kubectl --context kind-kind --namespace hello-grpc top pods
 ```
+
+Note that the backend uses a 1 ms sleep, so this does not indicate max performance. Rather, it serves as a somewhat realistic indication of the overhead and spread you will get in a real-world scenario.
