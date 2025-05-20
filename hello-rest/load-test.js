@@ -2,6 +2,8 @@ import http from "k6/http";
 import { b64encode } from "k6/encoding";
 import { check } from "k6";
 
+const endpoint = __ENV.HELLO_REST_ENDPOINT || "http://localhost:8080/";
+
 export const options = {
    scenarios: {
        // Assuming delay=0.8, worerks=4
@@ -17,7 +19,7 @@ export const options = {
 }
 
 export default function load() {
-    let res = http.get("http://hello-rest:8080/");
+    let res = http.get(endpoint);
     if (res.status == 0 || res.status > 299) {
         console.log(new Date().toISOString(), res.status);
     }
