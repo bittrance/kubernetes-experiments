@@ -7,3 +7,8 @@ RUN gpg -k && \
     echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | tee /etc/apt/sources.list.d/k6.list && \
     apt-get update && \
     apt-get install k6
+
+RUN apt-get install --yes golang && \
+    go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest && \
+    apt-get purge --yes golang && \
+    apt-get autoremove --yes
