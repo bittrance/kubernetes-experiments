@@ -3,9 +3,11 @@
 - [Kafka consumer stats](./kafka-consumer-stats): collect commit rate and offset rate for consumer groups on a Kafka cluster
 - [Gateway API waypoint proxy with Cilium](./gateway-api-cilium): Attempt to create a waypoint proxy setup using Gateway API. Ultimately failed, but useful as a template.
 - [Gateway API GRPC load balancing](./gateway-api-grpc): Use Gateway API and Cilium to get L7 load balancing of GRPC requests.
+- [Acceptance tests for Kuberntes configs](./acceptance-tests): Demonstrating how to use bats to verify that your Kubernetes contracts are upheld.
 - [TiDB benchmarking](./tidb-benchmarks): Set up a three-node TiDB cluster and benchmark it with various methods.
 - [General tools container](./tools-container): builds container image `bittrance/tools` useful for in-cluster debugging
 - [Consul setup](./consul-k8s): sets up a Consul cluster on Kubernetes for testing and development
+- [OIDC Federation with Dex](./oidc-federation): Example OpenID Connect setup, federating with Azure Entra ID.
 - [REST API testing container](./hello-rest): trivial REST API that can artificially delay requests
 
 ## Development setup
