@@ -1,0 +1,37 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: workload-policies
+  annotations:
+    policies.kyverno.io/title: Policies for workloads
+    policies.kyverno.io/subject: Deployment, StatefulSet, CronJob
+    policies.kyverno.io/description: >-
+      Policies that apply to workloads. Replies apply to namespaces with
+      label windwards.net/namespace-type=workload.
+spec:
+  validationFailureAction: Enforce
+  rules:
+    - name: enforce-release-version
+      match:
+          resources:
+            namespaceSelector:
+              matchLabels:
+                windwards.net/namespace-type: workload
+            kinds:
+              - Deployment
+              - StatefulSet
+              - CronJob
+            operations:
+              - CREATE
+              - UPDATE
+      validate:
+        cel:
+          variables:
+            - name: version
+              expression: object.metadata.?labels["app.kubernetes.io/version"].orValue('')
+            - name: is_release
+              expression: r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-[1-9]+)?$'
+          expressions:
+            - expression: variables.version.matches(variables.is_release)
+              messageExpression: >-
+                'Only release versions can be deployed to this cluster. Regex "' + variables.is_release + '" does not match "' + variables.version + '".'
