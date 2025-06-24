@@ -8,6 +8,7 @@
 - [Consul setup](./consul-k8s): sets up a Consul cluster on Kubernetes for testing and development
 - [REST API testing container](./hello-rest): trivial REST API that can artificially delay requests
 - [Enforce release versions with Kyverno](./kyverno-enforce-verions): Simple Kyverno rule to ensure deployed workload version numbers follow a certain pattern.
+- [Resilient Valkey setup](./valkey-resiliency): Demonstrate the resiliency of a Sentinel-based Valkey setup, using a k6 load test
 
 ## Development setup
 
