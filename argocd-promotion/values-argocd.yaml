@@ -1,0 +1,12 @@
+global:
+  domain: argocd.localtest.me
+  networkPolicy.create: true
+configs:
+  cm:
+    timeout.reconciliation: 30s
+  params:
+    server.insecure: true
+    hydrator.enabled: true
+server:
+  ingress:
+    enabled: true

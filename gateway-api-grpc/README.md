@@ -73,7 +73,7 @@ Latency distribution:
 While this load test is running we can observe that the load is spread across all pods, demonstrating L7 load balancing.
 
 ```shell
-watch kubectl --context kind-kind --namespace hello-grpc top pods
+watch kubectl --namespace hello-grpc top pods
 ```
 
 Note that the backend uses a 1 ms sleep, so this does not indicate max performance. Rather, it serves as a somewhat realistic indication of the overhead and spread you will get in a real-world scenario.
