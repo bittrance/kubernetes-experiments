@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-rest
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hello-rest
+  namespace: hello-rest
   labels:
     app.kubernetes.io/name: hello-rest
 spec:
@@ -21,22 +27,17 @@ spec:
     spec:
       containers:
         - name: rest
-          image: bittrance/hello-rest:0.3.0
-          args:
-            - --workers=4
-            - --bind=0.0.0.0:8080
-            - --graceful-timeout=15
-            - app:build()
+          image: bittrance/hello-world:axum-hello-rest
           env:
             - name: HELLO_REST_REQUEST_DELAY
-              value: "2.5"
+              value: "0.5"
           ports:
             - name: http
               containerPort: 8080
           lifecycle:
             preStop:
-              exec:
-                command: ["/bin/bash", "-c", "sleep 2"]
+              sleep:
+                seconds: 2
           startupProbe:
             failureThreshold: 10
             httpGet:
@@ -58,28 +59,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: hello-rest
+  namespace: hello-rest
 spec:
   selector:
     app.kubernetes.io/name: hello-rest
-  type: NodePort
+  type: LoadBalancer
   ports:
     - name: http
       port: 8080
       targetPort: http
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: Ingress
-# metadata:
-#   name: hello-rest
-# spec:
-#   ingressClassName: nginx
-#   rules:
-#   - http:
-#       paths:
-#       - path: /
-#         pathType: Prefix
-#         backend:
-#           service:
-#             name: hello-rest
-#             port:
-#               name: http
