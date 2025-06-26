@@ -18,7 +18,6 @@ kind: Deployment
 metadata:
   annotations:
     argocd.argoproj.io/tracking-id: team-awesome_hello-rest-prod:apps/Deployment:/hello-rest
-    testo: argo-cd
   labels:
     app.kubernetes.io/name: hello-rest
   name: hello-rest
