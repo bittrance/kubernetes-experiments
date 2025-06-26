@@ -1,0 +1,42 @@
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: ClusterScmProvider
+metadata:
+  name: bittrance-gitops-promoter
+spec:
+  github:
+    appID: 1460251
+    installationID: 72971609
+  secretRef:
+    name: bittrance-gitops-promoter
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: team-awesome
+  namespace: argo-cd
+spec:
+  sourceNamespaces:
+  - team-awesome
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-awesome
+  namespace: argo-cd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/bittrance/kubernetes-experiments
+    targetRevision: argocd-promotion
+    path: argocd-promotion/hello-rest/argo
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-awesome
