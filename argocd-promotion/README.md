@@ -1,8 +1,15 @@
 # Demonstrate Argo CD with environment promotion
 
-This experiment demonstrates two  b
+This experiment demonstrates two somewhat unrelated features:
+
+- self-service app installation with ArgoCD. A platform team empowers a dev team to bootstrap their own set of apps across multiple namespaces.
+- environment promotion using environment branches. This explores the ArgoCD "hydration" concept in combination with [gitops-promoter](https://github.com/argoproj-labs/gitops-promoter) to have automatic pull request-based promotion of changes across environments.
+
+![teams spaces and promotion in one picture](./teams-and-promotion.png)
 
 Unlike other experiments, I decided it would be too much work to pull in my own SCM service (e.g. Forgejo) so you will have to modify this experiment to point to your own GitHub account or similar.
+
+This experiment was performed with ArgoCD 8.1.2 which is the first version in which the hydration feature work when installing with the Helm chart. For more info, see [#3333](https://github.com/argoproj/argo-helm/issues/3333).
 
 ```shell
 kind create cluster --config ./kind-cluster.yaml
@@ -28,12 +35,6 @@ kubectl --namespace argo-cd label \
   argocd.argoproj.io/secret-type=repository-write
 ```
 
-There is currently an issue with the ArgoCD Helm chart which means it [cannot talk to the commit server](https://github.com/argoproj/argo-helm/issues/3333) because it uses default service name (argocd-commit-server vs argo-cd-argocd-commit-server). We can work around this issue by adding our own service with the expected name:
-
-```shell
-kubectl --namespace argo-cd apply -f argocd-promotion/commitserver-workaround.yaml
-```
-
 ## Setup gitops-promoter
 
 ```shell
@@ -48,6 +49,29 @@ At this point, make sure your changes are pushed to SCM as this step will have A
 
 ```yaml
 kubectl apply -f ./argocd-promotion/platform-infra/team-awesome.yaml
+```
+
+At this point, the promoter-controller-manager fails with:
+```json
+{
+  "controller": "changetransferpolicy",
+  "controllerGroup": "promoter.argoproj.io",
+  "controllerKind": "ChangeTransferPolicy",
+  "ChangeTransferPolicy": {
+    "name": "hello-rest-environment-prod-9cd7019e",
+    "namespace": "team-awesome"
+  },
+  "namespace": "team-awesome",
+  "name": "hello-rest-environment-prod-9cd7019e",
+  "reconcileID": "fff61df4-0301-4d46-9573-a4b6a69d104f",
+  "error": "failed to calculate ChangeTransferPolicy status: failed to get SHAs for proposed branch \"environment/prod-next\": exit status 128"
+}
+```
+
+The problem can be addressed with a restart:
+
+```shell
+kubectl --namespace promoter-system rollout restart deployment promoter-controller-manager
 ```
 
 References:
