@@ -8,6 +8,9 @@ spec:
     repoURL: https://github.com/bittrance/kubernetes-experiments
     path: argocd-promotion/hello-rest/helm
     chart: hello-rest
+    helm:
+      valuesObject:
+        replicas: 2
   sourceHydrator:
     drySource:
       repoURL: https://github.com/bittrance/kubernetes-experiments
