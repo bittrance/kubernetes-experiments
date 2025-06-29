@@ -2,6 +2,10 @@
 
 This experiment strives to demonstrate how to use a Kyverno policy to stop deploys that have non-standard version numbers. The assumption is that builds on master branch are tagged and released with a traditional semver version, while builds from feature branches uses some other versioning scheme.
 
+It can be noted that using Kyverno rules for this is problematic as it will object to individual resources, rather than to a deploy. It is thus better to enforce such constraints in your CD before they are applied to the cluster.
+
+# Setup
+
 Create a standard Kind cluster as per top-level instructions.
 
 ```shell
