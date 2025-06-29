@@ -15,5 +15,6 @@ RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | gpg --d
 
 RUN apt-get install --yes golang && \
     go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest && \
+    ln -s /root/go/bin/grpcurl /usr/local/bin/grpcurl && \
     apt-get purge --yes golang && \
     apt-get autoremove --yes
