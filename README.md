@@ -7,6 +7,7 @@
 - [General tools container](./tools-container): builds container image `bittrance/tools` useful for in-cluster debugging
 - [Consul setup](./consul-k8s): sets up a Consul cluster on Kubernetes for testing and development
 - [REST API testing container](./hello-rest): trivial REST API that can artificially delay requests
+- [Enforce release versions with Kyverno](./kyverno-enforce-verions): Simple Kyverno rule to ensure deployed workload version numbers follow a certain pattern.
 
 ## Development setup
 
