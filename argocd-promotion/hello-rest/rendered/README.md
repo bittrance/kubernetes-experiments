@@ -7,6 +7,6 @@ To hydrate the manifests in this repository, run the following commands:
 
 git clone https://github.com/bittrance/kubernetes-experiments
 # cd into the cloned directory
-git checkout c7e61e03532c2a8b607300f88b5e487b2cabb329
+git checkout 5d64f80814181c645f7af653bf943e6fc845c461
 helm template . --name-template hello-rest-test --include-crds
 ```
