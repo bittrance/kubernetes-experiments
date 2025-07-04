@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: hello-rest
 spec:
-  replicas: 5
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: hello-rest
