@@ -1,7 +1,7 @@
 {
   "repoURL": "https://github.com/bittrance/kubernetes-experiments",
-  "drySha": "f389de220311338ee9dc93c65cd9470a8997923a",
+  "drySha": "ed8ca9d80aeb665f4fcba4bd125805de3d783eb7",
   "commands": [
-    "helm template . --name-template hello-rest-test --include-crds"
+    "helm template . --name-template hello-rest-test --set replicas=2 --include-crds"
   ]
 }
