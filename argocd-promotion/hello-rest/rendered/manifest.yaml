@@ -22,7 +22,7 @@ metadata:
     app.kubernetes.io/name: hello-rest
   name: hello-rest
 spec:
-  replicas: null
+  replicas: 2
   selector:
     matchLabels:
       app.kubernetes.io/name: hello-rest
