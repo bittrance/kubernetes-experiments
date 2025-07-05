@@ -1,0 +1,4 @@
+helm:
+  parameters:
+    - name: replicas
+      values: 2

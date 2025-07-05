@@ -1,0 +1,92 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hello-rest-test
+spec:
+  project: team-awesome
+  source:
+    repoURL: https://github.com/bittrance/kubernetes-experiments
+    path: argocd-promotion/hello-rest/helm
+    chart: hello-rest
+  sourceHydrator:
+    drySource:
+      repoURL: https://github.com/bittrance/kubernetes-experiments
+      targetRevision: argocd-promotion
+      path: argocd-promotion/hello-rest/helm
+    hydrateTo:
+      targetBranch: environment/test-next
+    syncSource:
+      targetBranch: environment/test
+      path: argocd-promotion/hello-rest/rendered
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hello-rest-test
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Helm hydration seem incomplete, so for now we have to create the namespace manually
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-rest-test
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hello-rest-prod
+spec:
+  project: team-awesome
+  source:
+    repoURL: https://github.com/bittrance/kubernetes-experiments
+    path: argocd-promotion/hello-rest/helm
+    chart: hello-rest
+  sourceHydrator:
+    drySource:
+      repoURL: https://github.com/bittrance/kubernetes-experiments
+      targetRevision: argocd-promotion
+      path: argocd-promotion/hello-rest/helm
+    hydrateTo:
+      targetBranch: environment/prod-next
+    syncSource:
+      targetBranch: environment/prod
+      path: argocd-promotion/hello-rest/rendered
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hello-rest-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+# Helm hydration seem incomplete, so for now we have to create the namespace manually
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-rest-prod
+---
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: GitRepository
+metadata:
+  name: kubernetes-experiments
+spec:
+  github:
+    owner: bittrance
+    name: kubernetes-experiments
+  scmProviderRef:
+    kind: ClusterScmProvider
+    name: bittrance-gitops-promoter
+---
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: PromotionStrategy
+metadata:
+  name: hello-rest
+spec:
+  environments:
+    - autoMerge: true
+      branch: environment/test
+    - autoMerge: false
+      branch: environment/prod
+  gitRepositoryRef:
+    name: kubernetes-experiments
