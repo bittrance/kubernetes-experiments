@@ -25,12 +25,8 @@ spec:
     automated:
       prune: true
       selfHeal: true
----
-# Helm hydration seem incomplete, so for now we have to create the namespace manually
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: hello-rest-test
+    syncOptions:
+      - CreateNamespace=true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -59,12 +55,8 @@ spec:
     automated:
       prune: true
       selfHeal: true
----
-# Helm hydration seem incomplete, so for now we have to create the namespace manually
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: hello-rest-prod
+    syncOptions:
+      - CreateNamespace=true
 ---
 apiVersion: promoter.argoproj.io/v1alpha1
 kind: GitRepository

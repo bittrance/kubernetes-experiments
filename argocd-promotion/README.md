@@ -11,6 +11,8 @@ Unlike other experiments, I decided it would be too much work to pull in my own 
 
 This experiment was performed with ArgoCD 8.1.2 which is the first version in which the hydration feature work when installing with the Helm chart. For more info, see [#3333](https://github.com/argoproj/argo-helm/issues/3333).
 
+This experiment ran into a problem with combining the two goals into a single experiment where it seems that storing [env-specific values in the "dry" repository does not quite work](https://github.com/argoproj/argo-cd/issues/23810).
+
 ```shell
 kind create cluster --config ./kind-cluster.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
@@ -24,14 +26,19 @@ helm upgrade --install \
   --values ./argocd-promotion/values-argocd.yaml \
   argo-cd \
   argo/argo-cd
-kubectl --namespace argo-cd create secret generic bittrance-gitops-promoter \
+```
+
+This secret should really be a "repo-write-creds" (a.k.a. template) for `https://github.com` so that it will be used for all GitHub repos (access will anyway be limited to where the app is installed). However, this is [not yet implemented](https://github.com/argoproj/argo-cd/issues/19406) and we therefore use a repo-specific secret:
+
+```shell
+kubectl --namespace argo-cd create secret generic github-com-bittrance-kubernetes-experiments-write \
   --from-literal=url=https://github.com/bittrance/kubernetes-experiments \
   --from-literal=type=git \
   --from-literal=githubAppID=1460251 \
   --from-literal=githubAppInstallationID=72971609 \
   --from-file=githubAppPrivateKey=./private-key.pem
 kubectl --namespace argo-cd label \
-  secret bittrance-gitops-promoter \
+  secret github-com-bittrance-kubernetes-experiments-write \
   argocd.argoproj.io/secret-type=repository-write
 ```
 
@@ -39,11 +46,25 @@ kubectl --namespace argo-cd label \
 
 ```shell
 kubectl apply -f https://github.com/argoproj-labs/gitops-promoter/releases/download/v0.7.0/install.yaml
+```
+I had to apply twice.
+
+```shell
 kubectl --namespace promoter-system create secret generic bittrance-gitops-promoter \
   --from-file=githubAppPrivateKey=./private-key.pem
+kubectl apply -f - <<EOF
+apiVersion: promoter.argoproj.io/v1alpha1
+kind: ClusterScmProvider
+metadata:
+  name: bittrance-gitops-promoter
+spec:
+  github:
+    appID: 1460251
+    installationID: 72971609
+  secretRef:
+    name: bittrance-gitops-promoter
+EOF
 ```
-
-I had to apply twice.
 
 At this point, make sure your changes are pushed to SCM as this step will have ArgoCD start pulling from repo:
 

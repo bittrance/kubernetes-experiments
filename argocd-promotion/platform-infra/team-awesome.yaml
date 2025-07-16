@@ -38,14 +38,3 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: team-awesome
----
-apiVersion: promoter.argoproj.io/v1alpha1
-kind: ClusterScmProvider
-metadata:
-  name: bittrance-gitops-promoter
-spec:
-  github:
-    appID: 1460251
-    installationID: 72971609
-  secretRef:
-    name: bittrance-gitops-promoter
