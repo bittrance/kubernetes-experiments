@@ -11,8 +11,6 @@ Unlike other experiments, I decided it would be too much work to pull in my own 
 
 This experiment was performed with ArgoCD 8.1.2 which is the first version in which the hydration feature work when installing with the Helm chart. For more info, see [#3333](https://github.com/argoproj/argo-helm/issues/3333).
 
-This experiment ran into a problem with combining the two goals into a single experiment where it seems that storing [env-specific values in the "dry" repository does not quite work](https://github.com/argoproj/argo-cd/issues/23810).
-
 ```shell
 kind create cluster --config ./kind-cluster.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
