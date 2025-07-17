@@ -8,6 +8,7 @@
 - [Consul setup](./consul-k8s): sets up a Consul cluster on Kubernetes for testing and development
 - [REST API testing container](./hello-rest): trivial REST API that can artificially delay requests
 - [Enforce release versions with Kyverno](./kyverno-enforce-verions): Simple Kyverno rule to ensure deployed workload version numbers follow a certain pattern.
+- [ArgoCD with GitOps promoter](./argocd-promotion): Testing the new "hydration" feature in ArgoCD and the corresponding gitops-promoter workflow operator. Also in this experiment is an attempt to delegate to dev teams to maintain their own apps.
 
 ## Development setup
 
