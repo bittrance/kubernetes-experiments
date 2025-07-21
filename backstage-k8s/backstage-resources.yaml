@@ -19,4 +19,18 @@ kind: Secret
 metadata:
   name: backstage-certificate
 type: Opaque
-
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: static-entities
+data:
+  users.yaml: |
+    apiVersion: backstage.io/v1alpha1
+    kind: User
+    metadata:
+      name: bittrance_gmail.com
+    spec:
+      profile:
+        email: bittrance@gmail.com
+      memberOf: [guests]

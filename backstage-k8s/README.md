@@ -1,18 +1,20 @@
 # Backstage on Kubernetes demo
 
+Experiment goals:
+
+- Backstage running in Kubernetes
+- Metadata from both CRD and repo scanning
+- programmatic access to software catalog
+
+# Setup
+
+Set up Kind cluster including nginx ingress controller as per top-level instructions. Add cert-manager as per instructions in oidc federation experiment.
+
+```shell
 helm repo add backstage https://backstage.github.io/charts
 helm upgrade --install backstage \
   --namespace backstage --create-namespace \
-  --set backstage.pdb.create=true \
-  --set ingress.enabled=true \
-  --set ingress.host=backstage.localtest.me \
-  --set ingress.tls.enabled=true \
-  --set ingress.tls.secretName=backstage-certificate \
+  --values ./backstage-k8s/backstage-values.yaml \
   backstage/backstage
-
-  --set backstage.replicas=2 \
-  --set postgresql.enabled=true \
-
-cert-manager.
-
-kubectl --namespace backstage apply -f ./backstage-k8s/certificate.yaml
+kubectl --namespace backstage apply -f ./backstage-k8s/backstage-resources.yaml
+```
