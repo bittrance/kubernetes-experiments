@@ -8,9 +8,10 @@ config:
         http_passwd ${LOKI_PASSWD}
         host loki-gateway.loki.svc
         port 80
-        auto_kubernetes_labels on
         compress gzip
         line_format json
+        labels namespace=$kubernetes['namespace_name'], container=$kubernetes['container_name']
+        structured_metadata container_image=$kubernetes['container_image'], node=$kubernetes['host'], pod_ip=$kubernetes['pod_ip'], pod_name=$kubernetes['pod_name']
 env:
   - name: LOKI_PASSWD
     valueFrom:
