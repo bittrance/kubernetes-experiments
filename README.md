@@ -41,3 +41,46 @@ helm install observability \
   --values ./prometheus-stack-values.yaml \
   prometheus-community/kube-prometheus-stack
 ```
+
+## Add users with RBAC
+
+Generate a private key and a CSR for the user:
+```shell
+openssl genrsa -out bittrance.key 2048
+openssl req -new -key bittrance.key -out bittrance.csr -subj "/CN=bittrance/O=developers"
+```
+
+Given the CSR, and admin can now ask Kubernetes to sign the request:
+
+```shell
+CSR_DATA=$(base64 -w0 < bittrance.csr)
+echo "apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: bittrance
+spec:
+  request: $CSR_DATA
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 604800
+  usages:
+    - client auth" | kubectl apply -f -
+kubectl certificate approve bittrance
+kubectl get csr bittrance -o jsonpath='{ .status.certificate }' | base64 -d > bittrance.crt
+```
+
+In order for bittrance to be able to perform actions, we need some RBAC:
+
+```shell
+kubectl apply -f ./util-manifests/bittrance-rbac.yaml
+```
+
+With this certificate, we can now create a kubectl context:
+
+```shell
+kubectl config set-credentials bittrance \
+  --client-key=bittrance.key \
+  --client-certificate=bittrance.crt \
+  --embed-certs=true
+kubectl config set-context kind-bittrance --cluster kind-kind --user bittrance
+kubectl --context kind-bittrance get deployments -A
+```
