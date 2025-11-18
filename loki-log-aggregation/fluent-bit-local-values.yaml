@@ -1,0 +1,20 @@
+config:
+  outputs: |
+    [OUTPUT]
+        name loki
+        match kube.*
+        tenant_id local-cluster
+        http_user local-cluster
+        http_passwd ${LOKI_PASSWD}
+        host loki-gateway.loki.svc
+        port 80
+        compress gzip
+        line_format json
+        labels namespace=$kubernetes['namespace_name'], container=$kubernetes['container_name']
+        structured_metadata container_image=$kubernetes['container_image'], node=$kubernetes['host'], pod_ip=$kubernetes['pod_ip'], pod_name=$kubernetes['pod_name']
+env:
+  - name: LOKI_PASSWD
+    valueFrom:
+      secretKeyRef:
+        name: fluent-bit
+        key: loki-passwd
