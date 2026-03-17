@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: marimo-examples
+---
+apiVersion: marimo.io/v1alpha1
+kind: MarimoNotebook
+metadata:
+  name: marimo-examples
+  namespace: marimo-examples
+spec:
+  source: https://github.com/marimo-team/examples.git
+  storage:
+    size: 1Gi
+  auth:
+    password:
+      secretKeyRef:
+        name: marimo-examples
+        key: password
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: marimo-examples
+  namespace: marimo-examples
+type: Opaque
+data:
+  password: dmVycmFoLXMzY3IzdA==
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: marimo-examples
+  namespace: marimo-examples
+spec:
+  rules:
+    - host: marimo-examples.localtest.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: marimo-examples
+                port:
+                  name: http
