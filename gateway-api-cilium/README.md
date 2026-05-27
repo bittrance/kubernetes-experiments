@@ -16,7 +16,7 @@ This experiment uses its own kind config in order to apply Cilium both as CNI an
 At the point of testing this, Cilium has a defect that means it fails to "adopt" gateways unless the `TLSRoute` CRD is present. To work around this, we load the experimental CRDs for now.
 
 ```bash
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/experimental-install.yaml
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.1/experimental-install.yaml
 ```
 
 We can now install Cilium. This takes a few minutes before everything is up and running. We also activate ALPN to get working HTTP/2 (and GRPC, though we do not test those in this experiment).
@@ -24,7 +24,7 @@ We can now install Cilium. This takes a few minutes before everything is up and 
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm upgrade --install cilium cilium/cilium \
-  --version 1.18.0.pre.0 \
+  --version 1.19.0 \
   --namespace kube-system \
   --set image.pullPolicy=IfNotPresent \
   --set ipam.mode=kubernetes \
