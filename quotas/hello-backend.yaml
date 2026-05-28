@@ -132,7 +132,7 @@ data:
                     descriptors:
                       - entries:
                           - key: database
-                            value: users
+                            value: '"users"'
                         type: requests
                 backends:
                   - host: localhost:3000
@@ -170,7 +170,7 @@ spec:
     spec:
       containers:
         - name: ratelimit
-          image: envoyproxy/ratelimit:v1.4.0
+          image: envoyproxy/ratelimit@sha256:fb48fbe3f8665c25b5601aa909904820cff0abafcd89f0fb559080d95d64ecc6 #b8d893f
           env:
             - name: USE_STATSD
               value: "false"
@@ -182,16 +182,16 @@ spec:
               value: redis:6379
             - name: RUNTIME_ROOT
               value: /data
-            - name: RUNTIME_SUBDIRECTORY
-              value: ratelimit
             - name: RUNTIME_WATCH_ROOT
               value: "false"
+            - name: RUNTIME_IGNOREDOTFILES
+              value: "true"
           command: [/bin/ratelimit]
           ports:
             - containerPort: 8081
           volumeMounts:
             - name: config
-              mountPath: /data/ratelimit/config
+              mountPath: /data/config
               readOnly: true
       volumes:
         - name: config
