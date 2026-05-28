@@ -42,6 +42,20 @@ spec:
       port: 8080
       targetPort: 8080
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentgateway-ui
+  namespace: hello-backend
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 15000
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,6 +72,20 @@ spec:
       labels:
         app: hello-backend
     spec:
+      initContainers:
+        - name: agentgateway
+          image: cr.agentgateway.dev/agentgateway:v1.3.0-alpha.1
+          restartPolicy: Always
+          args:
+            - -f
+            - /data/config.yaml
+          ports:
+            - containerPort: 8080
+            - containerPort: 15000
+          volumeMounts:
+            - name: agentgateway-config
+              mountPath: /data
+              readOnly: true
       containers:
         - name: caddy
           image: caddy:2.9.1-alpine
@@ -65,10 +93,159 @@ spec:
             - caddy
             - respond
             - --listen
-            - :8080
+            - :3000
             - --body
             - Hello backend!
             - --access-log
           ports:
-            - containerPort: 8080
+            - containerPort: 3000
+      volumes:
+        - name: agentgateway-config
+          configMap:
+            name: agentgateway
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentgateway
+  namespace: hello-backend
+data:
+  config.yaml: |
+    config:
+      adminAddr: 0.0.0.0:15000
+    binds:
+      - port: 8080
+        listeners:
+          - name: hello-backend:8080
+            routes:
+              - name: caddy
+                policies:
+                  # localRateLimit:
+                  #   - maxTokens: 10
+                  #     tokensPerFill: 1
+                  #     fillInterval: 1s
+                  #     type: requests
+                  remoteRateLimit:
+                    host: "ratelimit:8081"
+                    domain: hello-backend
+                    failureMode: failClosed
+                    descriptors:
+                      - entries:
+                          - key: database
+                            value: users
+                        type: requests
+                backends:
+                  - host: localhost:3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratelimit
+  namespace: hello-backend
+spec:
+  selector:
+    app: ratelimit
+  ports:
+    - name: grpc
+      port: 8081
+      appProtocol: kubernetes.io/h2c
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ratelimit
+  namespace: hello-backend
+  labels:
+    app: ratelimit
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ratelimit
+  template:
+    metadata:
+      labels:
+        app: ratelimit
+    spec:
+      containers:
+        - name: ratelimit
+          image: envoyproxy/ratelimit:v1.4.0
+          env:
+            - name: USE_STATSD
+              value: "false"
+            - name: LOG_LEVEL
+              value: debug
+            - name: REDIS_SOCKET_TYPE
+              value: tcp
+            - name: REDIS_URL
+              value: redis:6379
+            - name: RUNTIME_ROOT
+              value: /data
+            - name: RUNTIME_SUBDIRECTORY
+              value: ratelimit
+            - name: RUNTIME_WATCH_ROOT
+              value: "false"
+          command: [/bin/ratelimit]
+          ports:
+            - containerPort: 8081
+          volumeMounts:
+            - name: config
+              mountPath: /data/ratelimit/config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: ratelimit
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ratelimit
+  namespace: hello-backend
+data:
+  hello-backend.yaml: |
+    domain: hello-backend
+    descriptors:
+      - key: database
+        # value: users
+        rate_limit:
+          unit: second
+          requests_per_unit: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: hello-backend
+spec:
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: hello-backend
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis@sha256:c1577292d092f1bfa6c91cbb13ca3368448d6331b22f43fca39b082795245327 # redis:8.8.0-alpine3.23
+          ports:
+            - containerPort: 6379
 
